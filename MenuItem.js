@@ -1,0 +1,148 @@
+export default class MenuItem {
+    constructor(scene, x, y, width, label, tag) {
+        this.scene = scene;
+        this.container = scene.add.container(x, y);
+        this.label = label;
+        this.tag = tag;
+        this.expanded = false;
+        this.contentContainers = {}; // Stores tagged content
+        this.width = width;
+        this.currentY = this.getContentStartY();
+        
+        // Sub menus
+        this.contentAdded = false;
+        this.subMenuWidth = width - 10;
+        this.subExpanded = {};
+        this.subMemuContainer = scene.add.container(5, 5);
+        this.subContentContainers = {};
+        this.subMenuHeaders = [];
+        this.currentSubY = this.getContentStartY();
+
+        this.buildHeader();
+        this.setupInteraction();
+    }
+
+    buildHeader() {
+        // Save the background so we can attach interaction to it
+        this.bg = this.scene.add.rectangle(0, 0, this.width, this.scene.menuSetting.headerHeight, 0x0000ff).setOrigin(0).setInteractive();
+
+        this.toggleImg = this.scene.add.image(10, this.scene.menuSetting.headerHeight / 2, 'closed').setScale(this.scene.menuSetting.toggleImgScale).setOrigin(0, 0.5);
+
+        const text = this.scene.add.text(10 + this.toggleImg.width * 2 * this.scene.menuSetting.toggleImgScale, this.scene.menuSetting.headerHeight / 2, this.label, {
+            fontSize: '18px',
+            color: '#ffffff'
+        }).setOrigin(0, 0.5);
+
+        this.container.add([this.bg, this.toggleImg, text]);
+    }
+    
+    setupInteraction() {
+        this.bg.on('pointerup', () => {
+            this.toggle();
+            // Optional: play click sound, animate, etc.
+        });
+    
+        // Improve touch responsiveness:
+        this.bg.on('pointerover', () => this.bg.setFillStyle(0x0000ff));
+        this.bg.on('pointerout', () => this.bg.setFillStyle(0x0000ff));
+    }
+
+    getContentStartY() {
+        return this.scene.menuSetting.headerHeight + 5; // Below the header
+    }
+    
+    getSubContentStartY() {
+        const contentHeight = Object.values(this.contentContainers).reduce((sum, c) => {
+            return c.visible ? sum + c.getBounds().height : sum;
+        }, 0);
+        if (!this.contentAdded) return 0;
+        return this.scene.menuSetting.headerHeight + this.scene.menuSetting.subHeaderHeight + contentHeight + 5 + 10;
+    }
+
+    addContent(container, tag) {
+        this.contentAdded = true;
+        container.setY(this.getContentStartY());
+        this.container.add(container); // Add to menu's container
+        this.contentContainers[tag] = container;
+        container.setVisible(false); // Hide by default
+    }
+
+    addSubMenu(title, subTag) {
+        if (!this.subMenuHeaders.includes(subTag)) {
+            this.subMenuHeaders.push(subTag);
+            this.buildSubHeaders(subTag);
+        }
+    }
+    
+    buildSubHeaders(subTag) {
+        const subBg = this.scene.add.rectangle(0, this.currentSubY, this.subMenuWidth, this.scene.menuSetting.subHeaderHeight, 0x555555).setOrigin(0).setInteractive();
+        const spacer = this.scene.add.rectangle(0, subBg.y, this.subMenuWidth, this.scene.menuSetting.subHeaderHeight + 5, 0x555555).setOrigin(0).setVisible(false);
+        this.subMemuContainer.add([subBg, spacer]);
+
+        this.subMemuContainer.setY(this.getSubContentStartY());
+        this.subContentContainers[subTag] = this.subMemuContainer;
+        this.subMemuContainer.setVisible(false); // Hide by default
+        
+        // Add to main container
+        this.container.add(this.subMemuContainer);
+        
+        this.currentSubY += this.scene.menuSetting.subHeaderHeight + 5;
+    }
+
+    remove(contentInstance) {
+        if (!contentInstance.rows) return;
+        
+        // Remove input events for safety
+        for (const row of Object.values(contentInstance.rows)) {
+            if (row.bg?.removeAllListeners) {
+                row.bg.removeAllListeners();
+            }
+        }
+    
+        contentInstance.rows = {};
+        
+        // Destroy all content containers
+        for (const container of Object.values(this.contentContainers)) {
+            container.destroy(true);
+        }
+    
+        this.contentContainers = {};
+    
+        // Destroy main container
+        this.container?.destroy(true);
+        this.container = null;
+    
+        // Remove from tracking arrays
+        this.scene.menuItems = this.scene.menuItems.filter(m => m !== this);
+    
+        this.scene.repositionBoxes();
+    }
+
+    toggle() {
+        this.expanded = !this.expanded;
+    
+        this.toggleImg.setTexture(this.expanded ? 'opened' : 'closed');
+
+        Object.values(this.contentContainers).forEach(c => c.setVisible(this.expanded));
+        Object.values(this.subContentContainers).forEach(c => c.setVisible(this.expanded));
+        this.scene.repositionBoxes?.(); // Optional repositioning logic
+    }
+
+    getHeight() {
+        if (!this.expanded) return this.scene.menuSetting.headerHeight;
+        // Sum of visible content heights + header
+        const contentHeight = Object.values(this.contentContainers).reduce((sum, c) => {
+            return c.visible ? sum + c.getBounds().height : sum;
+        }, 0);
+        const subContentHeight = Object.values(this.subContentContainers).reduce((sum, c) => {
+            return c.visible ? sum + c.getBounds().height : sum;
+        }, 0);
+        ////
+        if (!this.contentAdded) return this.scene.menuSetting.headerHeight + (this.scene.menuSetting.subHeaderHeight + 5) * this.subMenuHeaders.length;
+        return this.scene.menuSetting.headerHeight + contentHeight + subContentHeight + 5;
+    }
+
+    setY(y) {
+        this.container.y = y;
+    }
+}
