@@ -11,12 +11,15 @@ export default class MenuItem {
         
         // Sub menus
         this.contentAdded = false;
+        this.subContentAdded = false;
         this.subMenuWidth = width - 10;
         this.subExpanded = {};
         this.subMemuContainer = scene.add.container(5, 5);
         this.subContentContainers = {};
         this.subMenuHeaders = [];
         this.currentSubY = this.getContentStartY();
+        this.headerY = {};
+        this.subTag = {};
 
         this.buildHeader();
         this.setupInteraction();
@@ -59,23 +62,80 @@ export default class MenuItem {
         return this.scene.menuSetting.headerHeight + this.scene.menuSetting.subHeaderHeight + contentHeight + 5 + 10;
     }
 
-    addContent(container, tag) {
-        this.contentAdded = true;
-        container.setY(this.getContentStartY());
-        this.container.add(container); // Add to menu's container
-        this.contentContainers[tag] = container;
-        container.setVisible(false); // Hide by default
+addContent(container, tag) {
+    this.contentAdded = true;
+
+    let yOffset = this.getContentStartY(); // start after header
+    for (const c of Object.values(this.contentContainers)) {
+        yOffset += c.height + 5; // add height of previous content + spacer
     }
 
-    addSubMenu(title, subTag) {
-        if (!this.subMenuHeaders.includes(subTag)) {
-            this.subMenuHeaders.push(subTag);
-            this.buildSubHeaders(subTag);
-        }
+    container.setY(yOffset);
+    this.container.add(container); 
+    this.contentContainers[tag] = container;
+    container.setVisible(false)
+    
+    this.recalculateLayout();
+}
+
+addSubMenu(title, subTag) {
+    this.subContentAdded = true;
+    if (this.subContentContainers[subTag]) return;
+
+    const headerContainer = this.scene.add.container(5, 0);
+
+    const bg = this.scene.add.rectangle(0, 0, this.subMenuWidth, this.scene.menuSetting.subHeaderHeight, 0x2222ff).setOrigin(0).setInteractive();
+    const text = this.scene.add.text(10, this.scene.menuSetting.subHeaderHeight / 2, title, {
+        fontSize: '16px',
+        color: '#ffffff'
+    }).setOrigin(0, 0.5);
+
+    headerContainer.add([bg, text]);
+
+    // Compute Y offset: after existing content + submenu headers + content
+    let yOffset = this.getContentStartY();
+    for (const c of Object.values(this.contentContainers)) {
+        yOffset += c.height + 5;
     }
+    for (const { header, content } of Object.values(this.subContentContainers)) {
+        if (header) yOffset += header.height + 5;
+        if (content) yOffset += content.height + 5;
+    }
+
+    headerContainer.setY(yOffset);
+    headerContainer.setVisible(false);
+    this.container.add(headerContainer);
+
+    this.subMenuHeaders.push(subTag);
+    this.subContentContainers[subTag] = {
+        header: headerContainer,
+        content: null,
+        expanded: false
+    };
+
+    bg.on('pointerup', () => {
+        this.toggleSub(subTag);
+    });
+}
+
+addSubMenuContent(subContainer, subTag) {
+    const entry = this.subContentContainers[subTag];
+    if (!entry) return console.warn(`No subHeader for ${subTag}`);
+
+    // Position right under the sub-header
+    const headerY = entry.header.y;
+    const headerHeight = this.scene.menuSetting.subHeaderHeight;
+    const spacer = 5;
+
+    subContainer.setY(headerY + headerHeight + spacer);
+    subContainer.setVisible(false);
+    this.container.add(subContainer);
+
+    entry.content = subContainer;
+}
     
     buildSubHeaders(subTag) {
-        const subBg = this.scene.add.rectangle(0, this.currentSubY, this.subMenuWidth, this.scene.menuSetting.subHeaderHeight, 0x555555).setOrigin(0).setInteractive();
+        const subBg = this.scene.add.rectangle(0, this.currentSubY, this.subMenuWidth, this.scene.menuSetting.subHeaderHeight, 0x222222ff).setOrigin(0).setInteractive();
         const spacer = this.scene.add.rectangle(0, subBg.y, this.subMenuWidth, this.scene.menuSetting.subHeaderHeight + 5, 0x555555).setOrigin(0).setVisible(false);
         this.subMemuContainer.add([subBg, spacer]);
 
@@ -87,7 +147,57 @@ export default class MenuItem {
         this.container.add(this.subMemuContainer);
         
         this.currentSubY += this.scene.menuSetting.subHeaderHeight + 5;
+        this.headerY[subTag] = this.currentSubY;
+        
+        subBg.on('pointerup', () => {
+            this.toggleSub();
+            // Optional: play click sound, animate, etc.
+        });
+        
+        this.recalculateLayout();
     }
+
+toggleSub(subTag) {
+    const entry = this.subContentContainers[subTag];
+    if (!entry) return;
+
+    entry.expanded = !entry.expanded;
+    if (entry.content) {
+        entry.content.setVisible(entry.expanded);
+    }
+
+    this.recalculateLayout();
+    this.scene.repositionBoxes?.();
+}
+
+recalculateLayout() {
+    let currentY = this.scene.menuSetting.headerHeight + 5;
+
+    // Reposition content containers
+    for (const c of Object.values(this.contentContainers)) {
+        c.setY(currentY);
+        if (c.visible) {
+            currentY += c.getBounds().height + 5;
+        }
+    }
+
+    // Reposition submenus
+    for (const { header, content, expanded } of Object.values(this.subContentContainers)) {
+        if (header) {
+            header.setY(currentY);
+            if (header.visible) {
+                currentY += header.getBounds().height + 5;
+            }
+        }
+
+        if (content) {
+            content.setY(currentY);
+            if (content.visible && expanded) {
+                currentY += content.getBounds().height + 5;
+            }
+        }
+    }
+}
 
     remove(contentInstance) {
         if (!contentInstance.rows) return;
@@ -118,29 +228,37 @@ export default class MenuItem {
         this.scene.repositionBoxes();
     }
 
-    toggle() {
-        this.expanded = !this.expanded;
-    
-        this.toggleImg.setTexture(this.expanded ? 'opened' : 'closed');
+toggle() {
+    this.expanded = !this.expanded;
+    this.toggleImg.setTexture(this.expanded ? 'opened' : 'closed');
 
-        Object.values(this.contentContainers).forEach(c => c.setVisible(this.expanded));
-        Object.values(this.subContentContainers).forEach(c => c.setVisible(this.expanded));
-        this.scene.repositionBoxes?.(); // Optional repositioning logic
+    Object.values(this.contentContainers).forEach(c => c.setVisible(this.expanded));
+
+    for (const { header, content, expanded } of Object.values(this.subContentContainers)) {
+        header.setVisible(this.expanded);
+        if (content) content.setVisible(this.expanded && expanded);
     }
 
-    getHeight() {
-        if (!this.expanded) return this.scene.menuSetting.headerHeight;
-        // Sum of visible content heights + header
-        const contentHeight = Object.values(this.contentContainers).reduce((sum, c) => {
-            return c.visible ? sum + c.getBounds().height : sum;
-        }, 0);
-        const subContentHeight = Object.values(this.subContentContainers).reduce((sum, c) => {
-            return c.visible ? sum + c.getBounds().height : sum;
-        }, 0);
-        ////
-        if (!this.contentAdded) return this.scene.menuSetting.headerHeight + (this.scene.menuSetting.subHeaderHeight + 5) * this.subMenuHeaders.length;
-        return this.scene.menuSetting.headerHeight + contentHeight + subContentHeight + 5;
+    this.recalculateLayout();
+    this.scene.repositionBoxes?.();
+}
+
+getHeight() {
+    if (!this.expanded) return this.scene.menuSetting.headerHeight;
+
+    let height = this.scene.menuSetting.headerHeight + 5;
+
+    for (const c of Object.values(this.contentContainers)) {
+        if (c.visible) height += c.getBounds().height;
     }
+
+    for (const { header, content, expanded } of Object.values(this.subContentContainers)) {
+        if (header.visible) height += header.getBounds().height;
+        if (content?.visible && expanded) height += content.getBounds().height;
+    }
+
+    return height + 5;
+}
 
     setY(y) {
         this.container.y = y;

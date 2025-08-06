@@ -61,7 +61,6 @@ class MainScene extends Phaser.Scene {
         this.menuItems.push(this.testMenu, this.testMenu2);
 
         // Menu contents
-/*
         const bg = this.add.rectangle(0, 0, this.menuSetting.width, this.menuSetting.contentHeight, 0x334433).setOrigin(0);
         const label = this.add.text(10, 10, 'Content TEST MENU1...', {
           fontSize: '16px',
@@ -69,7 +68,7 @@ class MainScene extends Phaser.Scene {
         });
         const testMenuContent = this.add.container(0, 0);
         testMenuContent.add([bg, label]);
-*/
+
         const bg2 = this.add.rectangle(0, 0, this.menuSetting.width, this.menuSetting.contentHeight, 0x334433).setOrigin(0);
         const label2 = this.add.text(10, 10, 'Content TEST MENU2...', {
           fontSize: '16px',
@@ -80,11 +79,13 @@ class MainScene extends Phaser.Scene {
         
         // Insert menu contents
         //this.testMenu.addContent(testMenuContent, 'test1');
-        this.testMenu2.addContent(testMenuContent2, 'test2');
+        //this.testMenu2.addContent(testMenuContent2, 'test2');
         
         // Sub menu items
         this.testMenu.addSubMenu('Sub Contents 1', 'sub1');
+        this.testMenu.addSubMenuContent(testMenuContent, 'sub1');
         this.testMenu.addSubMenu('Sub Contents 2', 'sub2');
+        this.testMenu.addSubMenuContent(testMenuContent2, 'sub2');
         
         this.repositionBoxes();
     }
