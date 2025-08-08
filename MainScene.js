@@ -1,22 +1,15 @@
 import MenuItem from './MenuItem.js';
+import TextObj from './TextObj.js';
+import EmptyObj from './EmptyObj.js';
+import { menuConfig } from './menuConfig.js';
 
 // `000`
 // console.log();
 
-const UI_STYLES = {
-    // Box Colors
-    titleBoxColor: 0x0000FF,
-    mainBoxColor: 0x34495e,
-    // Text Colors and Font Sizes
-    textColor: "#ffffff",
-    fontSizeLarge: "24px",
-    fontSizeMedium: "20px",
-    fontSizeSmall: "18px",
-    // Button Color
-    buttonColor: 0xe74c3c,
-    // Optional: Background Color
-    backgroundColor: 0x34495e,
-};
+export let scene = null;
+export function setScene(s) {
+    scene = s;
+}
 
 class MainScene extends Phaser.Scene {
     constructor() {
@@ -41,21 +34,46 @@ class MainScene extends Phaser.Scene {
         this.graphics.fillRect(0, 0, width, height);
         this.graphics.setDepth(-1); // -1 ensures it's behind other game elements
 
-        // **** LAYOUT
-        this.menuSetting = {
-            startX: 10,
-            startY: 10,
-            width: 400,
-            headerHeight: 40,
-            toggleImgScale: 0.5,
-            contentHeight: 80,
-            subHeaderHeight: 30
-        };
+// Pass scene
+setScene(this);
 
-        // Store menus for repositioning
-        this.menuItems = [];
-        
-        // Menu headers
+new TextObj({
+    parentMenu: 'Menu 1',
+    x: 0,
+    y: 0,
+    align: 'left',
+    width: 1,
+    heightPX: 60,
+    textColor: 'white',
+    backgroundColor: 'green',
+});
+
+new TextObj({
+    parentMenu: 'Menu 1',
+    x: 0,
+    y: 0,
+    align: 'left',
+    width: 1,
+    heightPX: 60,
+    textColor: 'white',
+    backgroundColor: 'green',
+});
+
+new TextObj({
+    parentMenu: 'BOIIIIIIIIII',
+    x: 0,
+    y: 0,
+    align: 'left',
+    width: 1,
+    heightPX: 60,
+    textColor: 'white',
+    backgroundColor: 'green',
+});
+
+
+
+
+/* // INTEGRATE ARRAY
         this.testMenu = new MenuItem(this, this.menuSetting.startX, this.menuSetting.startY, this.menuSetting.width, 'TEST MENU1', 'test1');
         this.testMenu2 = new MenuItem(this, this.menuSetting.startX, this.menuSetting.startY, this.menuSetting.width, 'TEST MENU2', 'test2');
         this.menuItems.push(this.testMenu, this.testMenu2);
@@ -79,9 +97,14 @@ class MainScene extends Phaser.Scene {
         //
         const testMenuContent2 = this.add.container(5, 500); // y = 0
         testMenuContent2.add([bg2, label2]);
+
+        const bg3 = this.add.rectangle(0, 0, this.menuSetting.width - 5, this.menuSetting.contentHeight, 0x334433).setOrigin(0);
+        //
+        const testMenuContent3 = this.add.container(5, 500); // y = 0
+        testMenuContent3.add(bg3);
         
         // Insert menu contents
-        //this.testMenu.addContent(testMenuContent, 'test1');
+        this.testMenu.addContent(testMenuContent3, 'test1');
         //this.testMenu2.addContent(testMenuContent2, 'test2');
         
         // Sub menu items
@@ -89,20 +112,9 @@ class MainScene extends Phaser.Scene {
         this.testMenu.addSubMenuContent(testMenuContent, 'sub1');
         this.testMenu.addSubMenu('Sub Contents 2', 'sub2');
         this.testMenu.addSubMenuContent(testMenuContent2, 'sub2');
-        
-        this.repositionBoxes();
-    }
+// INTEGRATE ARRAY */ 
 
-    // Lime up menus
-    repositionBoxes() {
-        let currentY = this.menuSetting.startY;
-        
-        for (const menu of this.menuItems) {
-            if (menu) {
-                menu.setY(currentY);
-                currentY += menu.getHeight() + 5; // Add spacing
-            }
-        }
+        //this.repositionBoxes();
     }
 } // MainScene
 
