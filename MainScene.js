@@ -61,20 +61,20 @@ class MainScene extends Phaser.Scene {
         this.menuItems.push(this.testMenu, this.testMenu2);
 
         // Menu contents
-        const bg = this.add.rectangle(0, 0, this.menuSetting.width, this.menuSetting.contentHeight, 0x334433).setOrigin(0);
+        const bg = this.add.rectangle(0, 0, this.menuSetting.width - 5, this.menuSetting.contentHeight, 0x334433).setOrigin(0);
         const label = this.add.text(10, 10, 'Content TEST MENU1...', {
           fontSize: '16px',
           color: '#ffffff'
         });
-        const testMenuContent = this.add.container(0, 0);
+        const testMenuContent = this.add.container(5, 0);
         testMenuContent.add([bg, label]);
 
-        const bg2 = this.add.rectangle(0, 0, this.menuSetting.width, this.menuSetting.contentHeight, 0x334433).setOrigin(0);
+        const bg2 = this.add.rectangle(0, 0, this.menuSetting.width - 5, this.menuSetting.contentHeight, 0x334433).setOrigin(0);
         const label2 = this.add.text(10, 10, 'Content TEST MENU2...', {
           fontSize: '16px',
           color: '#ffffff'
         });
-        const testMenuContent2 = this.add.container(0, 0);
+        const testMenuContent2 = this.add.container(5, 0);
         testMenuContent2.add([bg2, label2]);
         
         // Insert menu contents
@@ -97,7 +97,7 @@ class MainScene extends Phaser.Scene {
         for (const menu of this.menuItems) {
             if (menu) {
                 menu.setY(currentY);
-                currentY += menu.getHeight() + 4; // Add spacing
+                currentY += menu.getHeight() + 5; // Add spacing
             }
         }
     }

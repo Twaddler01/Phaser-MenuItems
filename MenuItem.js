@@ -12,7 +12,7 @@ export default class MenuItem {
         // Sub menus
         this.contentAdded = false;
         this.subContentAdded = false;
-        this.subMenuWidth = width - 10;
+        this.subMenuWidth = width - 5;
         this.subExpanded = {};
         this.subMemuContainer = scene.add.container(5, 5);
         this.subContentContainers = {};
@@ -247,17 +247,22 @@ getHeight() {
     if (!this.expanded) return this.scene.menuSetting.headerHeight;
 
     let height = this.scene.menuSetting.headerHeight + 5;
-
+        
     for (const c of Object.values(this.contentContainers)) {
         if (c.visible) height += c.getBounds().height;
     }
 
     for (const { header, content, expanded } of Object.values(this.subContentContainers)) {
+        const eachObjPaddimg = Object.keys(this.subContentContainers).length * 5;
         if (header.visible) height += header.getBounds().height;
-        if (content?.visible && expanded) height += content.getBounds().height;
+        if (content?.visible && expanded) {
+            height += content.getBounds().height + eachObjPaddimg;
+        } else if (!content?.visible && !expanded) {
+            height += 5;
+        }
     }
-
-    return height + 5;
+    
+    return height - 5;
 }
 
     setY(y) {
