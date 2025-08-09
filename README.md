@@ -5,4 +5,5 @@ MenuItem class for Phaser. Stacks different menu items + container contents.
 TEST URL: https://twaddler01.github.io/Phaser-MenuItems/
 
 # WIP
-Needs sub menu integration.
+- Needs sub menu integration.
+- Needs more objects or object customization.
